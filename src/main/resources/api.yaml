@@ -1,0 +1,143 @@
+openapi: '3.0.0'
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  license:
+    name: MIT
+paths:
+  /signUp:
+      post:
+        summary: sign up end point
+        operationId: signUp
+        tags:
+          - sign up
+          - registration
+        parameters:
+          - name: signUpObject
+            in: query
+            description: How many items to return at one time (max 100)
+            required: false
+            schema:
+              type: integer
+
+        responses:
+          '200':
+            description: An paged array of pets
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Pet"
+          '400':
+            description:
+
+          default:
+            description: unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Pet"
+  /signIn:
+        post:
+          summary: sign up end point
+          operationId: signIn
+          tags:
+            - sign up
+            - registration
+          parameters:
+            - name: signUpObject
+              in: query
+              description: How many items to return at one time (max 100)
+              required: false
+              schema:
+                type: integer
+
+          responses:
+            '200':
+              description: An paged array of pets
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/Pet"
+            '400':
+              description:
+
+            default:
+              description: unexpected error
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/Pet"
+  /confirmAccessCode:
+        post:
+          summary: confirmAccessCode
+          operationId: confirmAccessCode
+          tags:
+            - sign up
+            - registration
+          parameters:
+            - name: signUpObject
+              in: query
+              description: How many items to return at one time (max 100)
+              required: false
+              schema:
+                type: integer
+
+          responses:
+            '200':
+              description: An paged array of pets
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/Pet"
+            '400':
+              description:
+
+            default:
+              description: unexpected error
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/Pet"
+  /checkEmail:
+          post:
+            summary: checkEmail
+            operationId: checkEmail
+            tags:
+              - sign up
+              - registration
+            parameters:
+              - name: signUpObject
+                in: query
+                description: How many items to return at one time (max 100)
+                required: false
+                schema:
+                  type: integer
+
+            responses:
+              '200':
+                description: An paged array of pets
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/Pet"
+              '400':
+                description:
+
+              default:
+                description: unexpected error
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/Pet"
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        result:
+          type: string
+    SignUpObject:
+      type: object
+      properties:
+        result:
+          type: string
