@@ -20,6 +20,7 @@ class MainVerticle : AbstractVerticle() {
         }
     }
 
+
     override fun stop() {
         super.stop()
 
