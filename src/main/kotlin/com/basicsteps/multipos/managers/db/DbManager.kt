@@ -14,7 +14,7 @@ import org.keycloak.admin.client.Keycloak
 import org.keycloak.admin.client.KeycloakBuilder
 
 
-class DbManager {
+class DbManager(vertx: Vertx) {
     var signUpClient: MongoClient? = null
     var usersClient: Keycloak? = null
     var tenantClient: MongoClient? = null
@@ -23,41 +23,11 @@ class DbManager {
     var tenantStore: MongoDataStore? = null
     var signUpStore: MongoDataStore? = null
 
-    var vertx: Vertx? = null
+    var vertx: Vertx? = vertx
 
     var mongoUri: String? = null
 
     var currentTenantId: String? = null
-
-    constructor(vertx: Vertx) {
-        this.vertx = vertx
-        JsonConfigurer.getConfig().setHandler({ event ->
-            val config = event.result()
-            mongoUri = config.mongoUri
-            val signUpMongoConfig = JsonObject()
-                    .put("connection_string", mongoUri)
-                    .put("db_name", config.signUpDbName)
-            signUpClient = MongoClient.createShared(vertx, signUpMongoConfig)
-
-            usersClient = Keycloak.getInstance(
-                    "http://localhost:8080/auth",
-                    "master", // the realm to log in to
-                    "basicsteps", "26091981", "token-client", "f95c67b3-95df-444d-98be-60513de51a0b"
-            )
-//            usersClient = KeycloakBuilder
-//                    .builder()
-//                    .serverUrl("http://localhost:8080/auth")
-//                    .realm("master")
-//                    .grantType(OAuth2Constants.PASSWORD)
-//                    .clientId("token-client")
-//                    .clientSecret("f95c67b3-95df-444d-98be-60513de51a0b")
-//                    .username("basicsteps")
-//                    .password("26091981")
-//                    .build()
-            signUpStore = MongoDataStore(this.vertx, signUpClient, signUpMongoConfig)
-            signUpProtocol = SignUpProtocolImpl(this)
-        })
-    }
 
     fun createSignUp(signUp: SignUpMapper) : Observable<String>? {
         return signUpProtocol?.createSignUpMapper(signUp)
@@ -84,5 +54,30 @@ class DbManager {
         tenantClient = MongoClient.createShared(vertx, tenantMongoConfig)
         tenantStore = MongoDataStore(vertx, tenantClient, tenantMongoConfig)
         return tenantStore
+    }
+
+    fun close() {
+        signUpClient?.close()
+        tenantClient?.close()
+        usersClient?.close()
+    }
+
+    init {
+        JsonConfigurer.getConfig().setHandler({ event ->
+            val config = event.result()
+            mongoUri = config.mongoUri
+            val signUpMongoConfig = JsonObject()
+                    .put("connection_string", mongoUri)
+                    .put("db_name", config.signUpDbName)
+            signUpClient = MongoClient.createShared(vertx, signUpMongoConfig)
+
+            usersClient = Keycloak.getInstance(
+                    "http://localhost:8080/auth",
+                    "master", // the realm to log in to
+                    "basicsteps", "26091981", "token-client", "f95c67b3-95df-444d-98be-60513de51a0b"
+            )
+            signUpStore = MongoDataStore(this.vertx, signUpClient, signUpMongoConfig)
+            signUpProtocol = SignUpProtocolImpl(this)
+        })
     }
 }

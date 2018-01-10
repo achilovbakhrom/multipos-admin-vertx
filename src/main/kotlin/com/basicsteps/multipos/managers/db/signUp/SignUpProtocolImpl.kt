@@ -2,9 +2,11 @@ package com.basicsteps.multipos.managers.db.signUp
 
 import com.basicsteps.multipos.config.KeycloakConfig
 import com.basicsteps.multipos.core.DbException
-import com.basicsteps.multipos.core.LMResponse
+import com.basicsteps.multipos.core.exceptions.FieldConflictsException
+import com.basicsteps.multipos.core.exceptions.NotExistsException
+import com.basicsteps.multipos.core.exceptions.ReadDbFailedException
+import com.basicsteps.multipos.core.exceptions.WriteDbFailedException
 import com.basicsteps.multipos.managers.db.DbManager
-import com.basicsteps.multipos.model.sign_up.ConfirmationMapper
 import com.basicsteps.multipos.model.sign_up.SignUpMapper
 import com.basicsteps.multipos.utils.GenratorUtils
 import io.reactivex.Observable
@@ -47,30 +49,24 @@ class SignUpProtocolImpl (val dbManager: DbManager) : SignUpProtocol{
             findUserQuery?.execute({ handler ->
                 if (handler.succeeded()) {
                     if (handler.result().isEmpty) {
-                        event.onNext(false)
+                        event.onError(NotExistsException("mail", mail))
                         return@execute
                     }
-                    getSignUpMapperByMail(mail)
-                            .subscribe({result ->
-                                if (result != null) {
-                                    val equal = result.accessCode == accessCode
-                                    if (equal) {
-                                        createUser(result).subscribe()
-                                        removeSignUpMapper(mail).subscribe()
-                                    }
-                                    event.onNext(equal)
-                                }
-                            }, { error ->
-                                if (error is DbException) {
-                                    when (error.code) {
-                                        DbException.SUCH_DATA_NOT_EXISTS_CODE -> event.onError(DbException(DbException.SUCH_DATA_NOT_EXISTS_CODE, DbException.SUCH_DATA_NOT_EXISTS_MESSAGE))
-                                        DbException.SUCH_DATA_EXISTS_CODE -> event.onError(DbException(DbException.SUCH_DATA_EXISTS_CODE, DbException.SUCH_DATA_EXISTS_MESSAGE))
-                                        DbException.DB_FAILED_CODE -> event.onError(DbException(DbException.DB_FAILED_CODE, DbException.DB_FAILED_MESSAGE))
-                                    }
-                                }
-                            })
+                    if (handler.result().size() > 1) {
+                        event.onError(FieldConflictsException("mail", mail))
+                        return@execute
+                    }
+                    handler.result().iterator().next({item ->
+                        val result = item.result()
+                        val equal = result.accessCode == accessCode
+                        if (equal) {
+                            createUser(result).subscribe() // TODO handle error
+                            removeSignUpMapper(mail).subscribe() // TODO handle error
+                        }
+                        event.onNext(equal)
+                    })
                 } else {
-                    event.onError(DbException(DbException.DB_FAILED_CODE, DbException.DB_FAILED_MESSAGE))
+                    event.onError(ReadDbFailedException())
                 }
             })
         })
@@ -84,7 +80,7 @@ class SignUpProtocolImpl (val dbManager: DbManager) : SignUpProtocol{
                 if (handler.succeeded()) {
                     event.onNext(handler.result().isEmpty)
                 } else {
-                    event.onError(DbException(DbException.DB_FAILED_CODE, DbException.DB_FAILED_MESSAGE))
+                    event.onError(ReadDbFailedException())
                 }
             })
         })
@@ -95,7 +91,7 @@ class SignUpProtocolImpl (val dbManager: DbManager) : SignUpProtocol{
             val mail = signUpMapper.mail
             emailUnique(mail).subscribe({ unique ->
                 if (!unique) {
-                    event.onError(DbException(DbException.SUCH_DATA_EXISTS_CODE, DbException.SUCH_DATA_EXISTS_MESSAGE + ": $mail" ))
+                    event.onError(FieldConflictsException("mail", mail))
                 } else {
                     val write = dbManager.signUpStore?.createWrite(SignUpMapper::class.java)!!
                     write.add(signUpMapper)
@@ -104,7 +100,7 @@ class SignUpProtocolImpl (val dbManager: DbManager) : SignUpProtocol{
                         if (writeEvent.succeeded()) {
                             event.onNext(signUpMapper.id)
                         } else {
-                            event.onError(DbException(DbException.DB_FAILED_CODE, DbException.DB_FAILED_MESSAGE))
+                            event.onError(WriteDbFailedException())
                         }
                     })
                 }
@@ -137,12 +133,12 @@ class SignUpProtocolImpl (val dbManager: DbManager) : SignUpProtocol{
                     if (handler.result().size() == 1) {
                         handler.result().iterator().next({item -> event.onNext(item.result())})
                     } else if (handler.result().isEmpty) {
-                        event.onError(DbException(DbException.SUCH_DATA_NOT_EXISTS_CODE, DbException.SUCH_DATA_NOT_EXISTS_MESSAGE))
+                        event.onError(NotExistsException("mail", email))
                     } else {
-                        event.onError(DbException(DbException.SUCH_DATA_EXISTS_CODE, DbException.SUCH_DATA_EXISTS_MESSAGE + ": more than twice $email" ))
+                        event.onError(FieldConflictsException("mail", email))
                     }
                 } else {
-                    event.onError(DbException(DbException.DB_FAILED_CODE, DbException.DB_FAILED_MESSAGE))
+                    event.onError(ReadDbFailedException())
                 }
             })
         })
