@@ -1,22 +1,21 @@
 package com.basicsteps.multipos.verticles
 
-import com.basicsteps.multipos.config.EndpointUriTypes
+import com.basicsteps.multipos.config.EndpointUriOperationId
 import com.basicsteps.multipos.routers.SignInRouter
 import com.basicsteps.multipos.routers.SignUpRouter
+import com.basicsteps.multipos.utils.vertx_bug_fixed.OAuth2AuthHandlerImpl
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerOptions
 import io.vertx.core.json.JsonObject
-import io.vertx.ext.auth.oauth2.OAuth2Auth
 import io.vertx.ext.auth.oauth2.OAuth2FlowType
 import io.vertx.ext.auth.oauth2.providers.KeycloakAuth
-import io.vertx.ext.web.Router
+import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory
 import io.vertx.ext.web.handler.CorsHandler
-import io.vertx.ext.web.handler.OAuth2AuthHandler
 
-class OpenApiRoutingVerticle() : AbstractVerticle() {
+class OpenApiRoutingVerticle : AbstractVerticle() {
     var server: HttpServer? = null
     var signUpRouter: SignUpRouter? = null
     var signInRouter: SignInRouter? = null
@@ -35,22 +34,6 @@ class OpenApiRoutingVerticle() : AbstractVerticle() {
 //                    routingContext.response().end("Hello World! PRivet mir")
 //                })
 
-                routerFactory.addHandlerByOperationId(EndpointUriTypes.SIGN_UP.endpoint, { routingContext -> signUpRouter?.signUp(routingContext) })
-                routerFactory.addHandlerByOperationId(EndpointUriTypes.SIGN_IN.endpoint, { routingContext -> signInRouter?.signIn(routingContext) })
-                routerFactory.addHandlerByOperationId(EndpointUriTypes.CONFIRM_ACCESS_CODE.endpoint, { routingContext -> signUpRouter?.confirmAccessCode(routingContext) })
-                routerFactory.addHandlerByOperationId(EndpointUriTypes.IS_EMAIL_EXISTS.endpoint, { routingContext -> signUpRouter?.isEmailExists(routingContext) })
-                routerFactory.addHandlerByOperationId(EndpointUriTypes.GET_ACCESS_CODE.endpoint, { routingContext -> signUpRouter?.getAccessCode(routingContext) })
-                routerFactory.addHandlerByOperationId(EndpointUriTypes.VERIFICATION.endpoint, { routingContext -> signInRouter?.verification(routingContext) })
-
-
-                // Add an handler with a combination of HttpMethod and path
-                // Before router creation you can enable or disable mounting a default failure handler for ValidationException
-                routerFactory.enableValidationFailureHandler(false)
-                // Now you have to generate the router
-
-
-
-
                 val keycloakJson = JsonObject("{\n" +
                         "\"realm\": \"master\",\n" +
                         "\"bearer-only\": true,\n" +
@@ -60,18 +43,32 @@ class OpenApiRoutingVerticle() : AbstractVerticle() {
                         "\"resource\": \"vertx\",\n" +
                         "\"use-resource-role-mappings\": true,\n" +
                         "\"credentials\": {\n" +
-                        "\"secret\": \"eda18747-3d11-456f-a553-d8e140cfaf58\"\n" +
+                        "\"secret\": \"eda18747-3d11-456f-a553-d8e140cfaf58\",\n" +
+                        "\"jwtToken\": false\n" +
                         "}\n" +
                         "}")
-
                 val oauth2 = KeycloakAuth
                         .create(vertx, OAuth2FlowType.AUTH_CODE, keycloakJson)
 
-                val handler = OAuth2AuthHandler.create(oauth2,
-                        "http://localhost:8081/")
+//                val handler = OAuth2AuthHandler.create(oauth2,
+//                        "http://localhost:8081/")
+                val handler = OAuth2AuthHandlerImpl(oauth2, "http://localhost:8081/")
+                routerFactory.addSecurityHandler("OAuth2", handler)
 
-                handler?.setupCallback(routerFactory.router.get("/api/v1/protected/callback"))
-                routerFactory.addSecurityHandler("api_key", handler)
+                handler.setupCallback(routerFactory.router.route("/callback"))
+
+                routerFactory.addHandlerByOperationId(EndpointUriOperationId.SIGN_UP.endpoint, { routingContext -> signUpRouter?.signUp(routingContext) })
+                routerFactory.addHandlerByOperationId(EndpointUriOperationId.SIGN_IN.endpoint, { routingContext -> signInRouter?.signIn(routingContext) })
+                routerFactory.addHandlerByOperationId(EndpointUriOperationId.CONFIRM_ACCESS_CODE.endpoint, { routingContext -> signUpRouter?.confirmAccessCode(routingContext) })
+                routerFactory.addHandlerByOperationId(EndpointUriOperationId.IS_EMAIL_EXISTS.endpoint, { routingContext -> signUpRouter?.isEmailExists(routingContext) })
+                routerFactory.addHandlerByOperationId(EndpointUriOperationId.GET_ACCESS_CODE.endpoint, { routingContext -> signUpRouter?.getAccessCode(routingContext) })
+                routerFactory.addHandlerByOperationId(EndpointUriOperationId.VERIFICATION.endpoint, { routingContext -> signInRouter?.verification(routingContext) })
+
+                // Add an handler with a combination of HttpMethod and path
+                // Before router creation you can enable or disable mounting a default failure handler for ValidationException
+//                routerFactory.enableValidationFailureHandler(false)
+                // Now you have to generate the router
+
                 val router = routerFactory.router
                 router.route().handler(CorsHandler.create("*")
                         .allowedMethod(HttpMethod.GET)
@@ -106,6 +103,10 @@ class OpenApiRoutingVerticle() : AbstractVerticle() {
             }
         }
 
+    }
+
+    fun test(routingContext: RoutingContext) {
+        routingContext.next()
     }
 
     override fun stop() {

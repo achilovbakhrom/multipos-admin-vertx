@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: io.vertx:vertx-auth-oauth2:3.5.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.vertx/vertx-auth-oauth2/3.5.0/c05280851acb53739b1e38afa15eb3b4c5e6173c/vertx-auth-oauth2-3.5.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/io.vertx/vertx-auth-oauth2/3.5.0/99fe7178c082e9944160dab39a0780739acf03b7/vertx-auth-oauth2-3.5.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

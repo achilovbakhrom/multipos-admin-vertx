@@ -9,15 +9,28 @@ import com.basicsteps.multipos.core.exceptions.WriteDbFailedException
 import com.basicsteps.multipos.managers.db.DbManager
 import com.basicsteps.multipos.model.sign_up.SignUpMapper
 import com.basicsteps.multipos.utils.GenratorUtils
+import com.sun.deploy.util.GeneralUtil
 import io.reactivex.Observable
 import org.keycloak.representations.idm.CredentialRepresentation
 import org.keycloak.representations.idm.UserRepresentation
 import java.util.*
+import kotlin.collections.HashMap
 
 class SignUpProtocolImpl (val dbManager: DbManager) : SignUpProtocol{
 
-    override fun getTenantId(id: String): Observable<String> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    override fun isTenantIdUnique(tenantId: String): Boolean {
+        val client = dbManager.usersClient!!
+        val users = client.realm(KeycloakConfig.REALM).users().list()
+        if (users == null || users.isEmpty()) return true
+        var result = true
+        for (user in users) {
+            val attrs = user.attributes?.get("X-TENANT-ID")
+            if (attrs != null && !attrs.isEmpty() && attrs.get(0).equals(tenantId)) {
+                result = false
+                break
+            }
+        }
+        return result
     }
 
 
@@ -31,12 +44,23 @@ class SignUpProtocolImpl (val dbManager: DbManager) : SignUpProtocol{
             user.setFirstName(signUpMapper.firstName)
             user.setLastName(signUpMapper.lastName)
             user.setCredentials(Arrays.asList(credential))
+            val attrs = HashMap<String, List<String>>()
+            attrs["langueage"] = listOf("en")
+            var tenantId = ""
+            while (true) {
+                tenantId = GenratorUtils.generateTenancyId()
+                if (isTenantIdUnique(tenantId)) {
+                    break
+                }
+            }
+            attrs.put("X-TENANT-ID", listOf(tenantId))
+            user.attributes = attrs
             user.isEnabled = true
             val client = dbManager.usersClient!!
             client.realm(KeycloakConfig.REALM)
                     .users()
                     .create(user)
-            //TODO other settings
+            //TODO Adding role
             event.onNext(client.realm("master").users().search(user.username).get(0).id)
         })
     }
@@ -78,7 +102,13 @@ class SignUpProtocolImpl (val dbManager: DbManager) : SignUpProtocol{
             signUpQuery?.field("mail")?.`is`(email)
             signUpQuery?.execute({ handler ->
                 if (handler.succeeded()) {
-                    event.onNext(handler.result().isEmpty)
+                    var result = handler.result().isEmpty
+                    if (result) {
+                        val client = dbManager.usersClient!!
+                        val users = client.realm(KeycloakConfig.REALM).users()
+                        result = users.search(email).isEmpty()
+                    }
+                    event.onNext(result)
                 } else {
                     event.onError(ReadDbFailedException())
                 }

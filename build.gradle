@@ -1,0 +1,79 @@
+buildscript {
+    ext.kotlin_version = '1.2.10'
+    ext.vertx_version = '3.5.0'
+    ext.keycloak_version = '3.4.3.Final'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+group 'com.basicsteps.multipos'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    //vertx dependencies
+
+    compile "io.vertx:vertx-core:$vertx_version"
+    compile "io.vertx:vertx-web:$vertx_version"
+    compile "io.vertx:vertx-mongo-client:$vertx_version"
+    compile "io.vertx:vertx-web-api-contract:$vertx_version"
+    compile "io.vertx:vertx-auth-oauth2:$vertx_version"
+    compile "io.vertx:vertx-config:$vertx_version"
+//    compile "io.vertx:vertx-rx-java:$vertx_version"
+    compile "io.vertx:vertx-rx-java2:$vertx_version"
+
+    //slf4j logger
+    compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.8.0-alpha2'
+
+    //Gson
+    compile 'com.google.code.gson:gson:2.8.2'
+
+    //KeyCloak
+    compile "org.keycloak:keycloak-core:$keycloak_version"
+    compile "org.keycloak:keycloak-adapter-core:$keycloak_version"
+    compile "org.keycloak:keycloak-admin-client:$keycloak_version"
+    // https://mvnrepository.com/artifact/org.jboss.resteasy/resteasy-jaxrs
+//    compile group: 'org.jboss.resteasy', name: 'resteasy-jaxrs', version: '4.0.0.Beta1'
+
+
+//    compile group: 'org.jboss.resteasy', name: 'resteasy-client', version: '2.3.5.Final'
+    compile group: 'org.jboss.resteasy', name: 'resteasy-client', version: '3.1.4.Final'
+    compile group: 'org.jboss.resteasy', name: 'resteasy-jaxrs', version: '3.1.4.Final'
+
+
+    compile group: 'org.jboss.resteasy', name: 'resteasy-jackson2-provider', version: '3.1.4.Final'
+    // https://mvnrepository.com/artifact/org.jboss.spec.javax.ws.rs/jboss-jaxrs-api_2.0_spec
+    compile group: 'org.jboss.spec.javax.ws.rs', name: 'jboss-jaxrs-api_2.0_spec', version: '1.0.0.Final'
+
+
+    //Pojo mapper
+//    compile 'de.braintags:vertx-pojo-mapper-common:1.4.0-SNAPSHOT'
+//    compile 'de.braintags:vertx-pojongo:1.4.0-SNAPSHOT'
+
+    compile group: 'de.braintags', name: 'vertx-pojo-mapper-common', version: '1.3.1'
+    compile group: 'de.braintags', name: 'vertx-pojongo', version: '1.3.1'
+
+
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}

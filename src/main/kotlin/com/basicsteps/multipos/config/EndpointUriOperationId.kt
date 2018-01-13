@@ -1,6 +1,6 @@
 package com.basicsteps.multipos.config
 
-enum class EndpointUriTypes(val endpoint: String) {
+enum class EndpointUriOperationId(val endpoint: String) {
     SIGN_UP("sign-up"),
     SIGN_IN("sign-in"),
     CONFIRM_ACCESS_CODE("confirm-access-code"),
