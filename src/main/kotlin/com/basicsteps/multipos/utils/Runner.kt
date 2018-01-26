@@ -11,8 +11,13 @@ import java.io.File
 import java.io.IOException
 import java.util.function.Consumer
 
-/*
- * @author <a href="http://tfox.org">Tim Fox</a>
+/**
+ * Created at 20.01.2018
+ *
+ * @author Achilov Bakhrom
+ *
+ * Singleton Helper for simple/clustered deploying verticles
+ * written in various languages (java, kotlin, ruby, javascript ...)
  */
 object Runner {
 

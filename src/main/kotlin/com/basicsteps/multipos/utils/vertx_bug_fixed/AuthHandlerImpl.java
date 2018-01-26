@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class AuthHandlerImpl implements AuthHandler {
 
-  static final String AUTH_PROVIDER_CONTEXT_KEY = "io.vertx.ext.web.handler.AuthHandler.provider";
+  static final String AUTH_PROVIDER_CONTEXT_KEY = "io.vertx.ext.web.handling.AuthHandler.provider";
 
   static final HttpStatusException FORBIDDEN = new HttpStatusException(403);
   static final HttpStatusException UNAUTHORIZED = new HttpStatusException(401);

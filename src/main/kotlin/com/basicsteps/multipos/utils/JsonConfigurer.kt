@@ -12,7 +12,7 @@ object JsonConfigurer {
 
     init {
         val js = JsonObject()
-        Vertx.vertx().fileSystem().readFile("src/main/resources/config.json") { result ->
+        Vertx.vertx().fileSystem().readFile("src/main/resources/entities.json") { result ->
             if (result.succeeded()) {
                 val buff = result.result()
                 js.mergeIn(JsonObject(buff.toString()))

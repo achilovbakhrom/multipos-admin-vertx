@@ -25,7 +25,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.impl.AuthHandlerImpl;
 
 /**
- * This a common handler for auth handler that use the `Authorization` HTTP header.
+ * This a common handling for auth handling that use the `Authorization` HTTP header.
  *
  * @author <a href="mailto:plopes@redhat.com">Paulo Lopes</a>
  */

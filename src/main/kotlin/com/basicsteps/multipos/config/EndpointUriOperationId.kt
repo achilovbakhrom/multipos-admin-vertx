@@ -6,5 +6,7 @@ enum class EndpointUriOperationId(val endpoint: String) {
     CONFIRM_ACCESS_CODE("confirm-access-code"),
     IS_EMAIL_EXISTS("check-email"),
     GET_ACCESS_CODE("get-access-code"),
-    VERIFICATION("verification")
+    VERIFICATION("verification"),
+    GET_UNITS("get-units"),
+    GET_UNIT_CATEGORIES_FULL("get-unit-categories-full")
 }
