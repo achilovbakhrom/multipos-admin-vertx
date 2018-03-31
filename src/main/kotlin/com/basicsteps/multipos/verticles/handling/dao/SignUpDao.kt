@@ -1,6 +1,5 @@
 package com.basicsteps.multipos.verticles.handling.dao
 
-import com.basicsteps.multipos.config.CommonConstants
 import com.basicsteps.multipos.config.KeycloakConfig
 import com.basicsteps.multipos.core.DbManager
 import com.basicsteps.multipos.core.dao.BaseDao
@@ -9,49 +8,52 @@ import com.basicsteps.multipos.core.model.exceptions.DeleteDbFailedException
 import com.basicsteps.multipos.core.model.exceptions.FieldConflictsException
 import com.basicsteps.multipos.core.model.exceptions.NotExistsException
 import com.basicsteps.multipos.core.model.exceptions.ReadDbFailedException
+import com.basicsteps.multipos.model.UserAttrs
 import com.basicsteps.multipos.model.sign_up.SignUpMapper
-import com.basicsteps.multipos.utils.GenratorUtils
 import de.braintags.io.vertx.pojomapper.mongo.MongoDataStore
 import io.reactivex.Observable
 import org.keycloak.representations.idm.CredentialRepresentation
 import org.keycloak.representations.idm.UserRepresentation
 import java.util.*
 
+
+
 class SignUpDao(dbManager: DbManager, mongoDataStore: MongoDataStore?) :
         BaseDao<SignUpMapper>(dbManager, mongoDataStore, SignUpMapper::class.java) {
 
-    fun createUser(signUpMapper: SignUpMapper): Observable<String> {
+    private fun createUser(signUpMapper: SignUpMapper): Observable<String> {
         return Observable.create({ event ->
             val credential = CredentialRepresentation()
             credential.type = CredentialRepresentation.PASSWORD
             credential.value = signUpMapper.password
             val user = UserRepresentation()
-            user.setUsername(signUpMapper.mail)
-            user.setFirstName(signUpMapper.firstName)
-            user.setLastName(signUpMapper.lastName)
-            user.setCredentials(Arrays.asList(credential))
+            user.username = signUpMapper.mail
+            user.firstName = signUpMapper.firstName
+            user.lastName = signUpMapper.lastName
+            user.email = signUpMapper.mail
+            user.credentials = Arrays.asList(credential)
             val attrs = HashMap<String, List<String>>()
-            attrs["langueage"] = listOf("en")
-            var tenantId = ""
-            while (true) {
-                tenantId = GenratorUtils.generateTenancyId()
-                if (isTenantIdUnique(tenantId)) {
-                    break
-                }
-            }
-            attrs.put(CommonConstants.HEADER_TENANT, listOf(tenantId))
+            if (signUpMapper.primaryPhone.isNullOrEmpty()) { attrs[UserAttrs.PRIMARY_PHONE.value()] = listOf() }
+            else { attrs[UserAttrs.PRIMARY_PHONE.value()] = listOf(signUpMapper.primaryPhone!!) }
+            if (signUpMapper.sex.isNullOrEmpty()) { attrs[UserAttrs.SEX.value()] = listOf() }
+            else { attrs[UserAttrs.SEX.value()] = listOf(signUpMapper.sex!!) }
+            if (signUpMapper.country.isNullOrEmpty()) { attrs[UserAttrs.COUNTRY.value()] = listOf() }
+            else { attrs[UserAttrs.COUNTRY.value()] = listOf(signUpMapper.country!!) }
+            attrs[UserAttrs.LANGUAGE.value()] = listOf("en")
+            attrs[UserAttrs.CONTACT.value()] = listOf()
+            attrs[UserAttrs.COMPANY_IDS.value()] = listOf()
+            attrs[UserAttrs.IMAGE_URL.value()] = listOf(signUpMapper.imageUrl!!)
+            if (signUpMapper.birthday.isNullOrEmpty()) { attrs[UserAttrs.BIRTHDAY.value()] = listOf() }
+            else { attrs[UserAttrs.BIRTHDAY.value()] = mutableListOf(signUpMapper.birthday!!) }
             user.attributes = attrs
             user.isEnabled = true
-            val client = dbManager?.keycloak!!
-            client.realm(KeycloakConfig.REALM)
-                    .users()
-                    .create(user)
-
             //TODO Adding role
 
-            //TODO create config files
-
-            event.onNext(client.realm("master").users().search(user.username).get(0).id)
+            dbManager?.userDao?.save(user)?.subscribe({ createdUser ->
+                event.onNext(createdUser.email)
+            }, {error ->
+                event.onError(error)
+            })
         })
     }
 
@@ -75,8 +77,7 @@ class SignUpDao(dbManager: DbManager, mongoDataStore: MongoDataStore?) :
                             val result = item.result()
                             val equal = result.accessCode == accessCode
                             if (equal) {
-                                createUser(result).subscribe()
-                                removeSignUpMapper(mail).subscribe({}, {error -> event.onError(error) })
+                                createUser(result).flatMap({ removeSignUpMapper(mail) }).subscribe()
                             }
                             event.onNext(equal)
                         })

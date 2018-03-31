@@ -10,6 +10,10 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.mongo.MongoClient
 import org.keycloak.admin.client.Keycloak
+import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder
+import org.keycloak.admin.client.KeycloakBuilder
+
+
 
 
 class DbManager(vertx: Vertx) {
@@ -30,42 +34,53 @@ class DbManager(vertx: Vertx) {
     var posDao: POSDao? = null
     var establishmentDao: EstablishmentDao? = null
     var stockDao: StockDao? = null
+    var tenantsDao: TenantsDao? = null
+    var userDao: UserDao? = null
+    var userCompanyRelDao: UserCompanyRelDao? = null
+
     private var vertx: Vertx? = vertx
 
     init {
-
         //keycloak client
-        keycloak = Keycloak.getInstance(
-                SystemConfig.KEYCLOAK_AUTH_ENDPOINT,
-                SystemConfig.REALM,
-                SystemConfig.KEYCLOAK_ADMIN,
-                SystemConfig.KEYCLOAK_PASSWORD,
-                SystemConfig.WEB_TOKEN_CLIENT_ID,
-                SystemConfig.WEB_TOKEN_CLIENT_SECRET
-        )
+        this.keycloak = KeycloakBuilder.builder() //
+                .serverUrl(SystemConfig.KEYCLOAK_AUTH_ENDPOINT) //
+                .realm(SystemConfig.REALM)//
+                .username(SystemConfig.KEYCLOAK_ADMIN) //
+                .password(SystemConfig.KEYCLOAK_PASSWORD) //
+                .clientId(SystemConfig.WEB_TOKEN_CLIENT_ID) //
+                .clientSecret(SystemConfig.WEB_TOKEN_CLIENT_SECRET)
+                .resteasyClient(ResteasyClientBuilder().connectionPoolSize(10).build()) //
+                .build()
 
         // init daos basing on datastores
-
+        //sign up datastore
         signUpDao = SignUpDao(this, getSignUpDataStore())
-        unitEntityDao = UnitEntityDao(this, null)
-        unitCategoryEntityDao = UnitCategoryEntityDao(this, null)
-        currencyDao = CurrencyDao(this, null)
-        accountDao = AccountDao(this, null)
-        paymentTypeDao = PaymentTypeDao(this, null)
-        vendorDao = VendorDao(this, null)
-        productDao = ProductDao(this, null)
-        categoryDao = CategoryDao(this, null)
-        subCategoryDao = SubCategoryDao(this, null)
 
+        //common datastore
         companyDao = CompanyDao(this, getCommonDataStore())
-        posDao = POSDao(this, null)
-        establishmentDao = EstablishmentDao(this, null)
-        stockDao = StockDao(this, null)
+        userCompanyRelDao = UserCompanyRelDao(this, getCommonDataStore())
+        tenantsDao = TenantsDao(this, getCommonDataStore())
+
+        //tenant datastore
+        unitEntityDao                   = UnitEntityDao(this, null)
+        unitCategoryEntityDao           = UnitCategoryEntityDao(this, null)
+        currencyDao                     = CurrencyDao(this, null)
+        accountDao                      = AccountDao(this, null)
+        paymentTypeDao                  = PaymentTypeDao(this, null)
+        vendorDao                       = VendorDao(this, null)
+        productDao                      = ProductDao(this, null)
+        categoryDao                     = CategoryDao(this, null)
+        subCategoryDao                  = SubCategoryDao(this, null)
+        posDao                          = POSDao(this, null)
+        establishmentDao                = EstablishmentDao(this, null)
+        stockDao                        = StockDao(this, null)
+
+        //UserDao
+        if (keycloak != null) userDao = UserDao(this)
         setMongoClientByTenantId(SystemConfig.COMMON_DB)
     }
 
     var commonDatastore: MongoDataStore? = null
-
     private fun getCommonDataStore() : MongoDataStore? {
         if (commonDatastore == null) {
             val commonDatastoreConfig = JsonObject()
@@ -75,17 +90,16 @@ class DbManager(vertx: Vertx) {
         }
         return commonDatastore
     }
-
-    var signUpdatStore: MongoDataStore? = null
-
+    
+    var signUpdataStore: MongoDataStore? = null
     private fun getSignUpDataStore() : MongoDataStore? {
-        if (signUpdatStore == null) {
+        if (signUpdataStore == null) {
             val signUpMongoConfig = JsonObject()
                     .put("connection_string", SystemConfig.MONGO_URI)
                     .put("db_name", SystemConfig.SIGN_UP_DB)
-            signUpdatStore = MongoDataStore(this.vertx, MongoClient.createNonShared(vertx, signUpMongoConfig), signUpMongoConfig)
+            signUpdataStore = MongoDataStore(this.vertx, MongoClient.createNonShared(vertx, signUpMongoConfig), signUpMongoConfig)
         }
-        return signUpdatStore
+        return signUpdataStore
     }
 
     fun setMongoClientByTenantId(tenantId: String) {
@@ -95,21 +109,18 @@ class DbManager(vertx: Vertx) {
         val temp = MongoDataStore(vertx, MongoClient.createNonShared(vertx, tenantMongoConfig), tenantMongoConfig)
 
         //set tenantStore to all daos
-        unitEntityDao?.dataStore = temp
-        unitCategoryEntityDao?.dataStore = temp
-        currencyDao?.dataStore = temp
-        accountDao?.dataStore = temp
-        paymentTypeDao?.dataStore = temp
-        vendorDao?.dataStore = temp
-        productDao?.dataStore = temp
-        posDao?.dataStore = temp
-        establishmentDao?.dataStore = temp
-        stockDao?.dataStore = temp
+        unitEntityDao?.dataStore                = temp
+        unitCategoryEntityDao?.dataStore        = temp
+        currencyDao?.dataStore                  = temp
+        accountDao?.dataStore                   = temp
+        paymentTypeDao?.dataStore               = temp
+        vendorDao?.dataStore                    = temp
+        productDao?.dataStore                   = temp
+        posDao?.dataStore                       = temp
+        establishmentDao?.dataStore             = temp
+        stockDao?.dataStore                     = temp
     }
-
-    fun close() {
-        keycloak?.close()
-    }
+    fun close() { keycloak?.close() }
 
     fun setTenantId(tenantId: String) : Observable<Boolean> {
         return Observable.create({ event ->
@@ -117,7 +128,6 @@ class DbManager(vertx: Vertx) {
             event.onNext(true)
         })
     }
-
     fun getTenantIdByEmail(mail: String) : Observable<String> {
         return Observable.create({event ->
             val user = keycloak?.realm(SystemConfig.REALM)?.users()?.search(mail)

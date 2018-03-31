@@ -4,21 +4,40 @@ import com.basicsteps.multipos.core.model.BaseModel
 import com.basicsteps.multipos.core.model.Instanceable
 import com.google.gson.annotations.SerializedName
 import de.braintags.io.vertx.pojomapper.annotation.Entity
-import de.braintags.io.vertx.pojomapper.annotation.field.Id
-import java.io.Serializable
 
 @Entity
 data class POS(@SerializedName("name") var name: String,
                @SerializedName("address") var address: String,
                @SerializedName("phone_number") var phoneNumber: String,
                @SerializedName("login") var login: String,
-               @SerializedName("name") var password: String,
-               @SerializedName("stock_ids") var stockId: MutableList<String>,
-               @SerializedName("stock_ids") var owner_company_id: String) : BaseModel() {
+               @SerializedName("password") var password: String) : BaseModel() {
 
-    @SerializedName("stock") var stock: Stock? = null
+    constructor() : this("", "", "", "", "")
 
     override fun instance(): Instanceable {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        val result = POS()
+
+        //base
+        result.createdTime = createdTime
+        result.modifiedTime = modifiedTime
+        result.createdBy = createdBy
+        result.modifiedBy = modifiedBy
+        result.active = active
+        result.deleted = deleted
+        result.userId = userId
+        result.rootId = rootId
+        result.modifiedId = modifiedId
+        result.companyId = companyId
+        result.posId = posId
+        result.access = access
+
+        //specs
+        result.name = name
+        result.address = address
+        result.phoneNumber = phoneNumber
+        result.password = password
+
+        return result
     }
+
 }

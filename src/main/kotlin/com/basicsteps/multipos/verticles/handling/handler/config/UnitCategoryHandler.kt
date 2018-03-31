@@ -5,6 +5,7 @@ import com.basicsteps.multipos.core.DbManager
 import com.basicsteps.multipos.core.dao.DataStoreException
 import com.basicsteps.multipos.core.model.exceptions.ReadDbFailedException
 import com.basicsteps.multipos.core.response.MultiPosResponse
+import com.basicsteps.multipos.model.StatusMessages
 import com.basicsteps.multipos.model.entities.UnitCategoryEntity
 import com.basicsteps.multipos.verticles.handling.dao.UnitCategoryEntityDao
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -21,9 +22,9 @@ class UnitCategoryHandler(vertx: Vertx, dbManager: DbManager) : BaseHandler(vert
                 ?.findAll()
                 ?.subscribe({list ->
                     if (list != null && !list.isEmpty()) {
-                        message.reply(MultiPosResponse<List<UnitCategoryEntity>>(list, null, "Success", HttpResponseStatus.OK.code()).toJson())
+                        message.reply(MultiPosResponse<List<UnitCategoryEntity>>(list, null, StatusMessages.SUCCESS.value(), HttpResponseStatus.OK.code()).toJson())
                     } else {
-                        message.reply(MultiPosResponse<Any>(null, "list is empty", "Error", HttpResponseStatus.NOT_FOUND.code()).toJson())
+                        message.reply(MultiPosResponse<Any>(null, "list is empty", StatusMessages.ERROR.value(), HttpResponseStatus.NOT_FOUND.code()).toJson())
                     }
                 }, {error ->
                     when(error) {
@@ -34,7 +35,6 @@ class UnitCategoryHandler(vertx: Vertx, dbManager: DbManager) : BaseHandler(vert
     }
 
     fun getUnitCategoriesWithUnits(message: Message<String>) {
-        print("test")
         dbManager.unitCategoryEntityDao
                 ?.findAll()
                 ?.subscribe({list ->
@@ -42,7 +42,7 @@ class UnitCategoryHandler(vertx: Vertx, dbManager: DbManager) : BaseHandler(vert
                         val result = JsonArray()
                         var temp: JsonObject? = null
                         var count = 0
-                        val test = Observable
+                        Observable
                                 .fromArray(list)
                                 .flatMapIterable({iter -> iter})
                                 .flatMap({item ->

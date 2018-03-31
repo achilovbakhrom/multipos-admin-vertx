@@ -32,6 +32,7 @@ data class UnitEntity(@SerializedName("name") var name: String,
         result.name = name
         result.abbr = abbr
         result.factor = factor
+        result.unitCategoryEntityId = unitCategoryEntityId
         return result
     }
 

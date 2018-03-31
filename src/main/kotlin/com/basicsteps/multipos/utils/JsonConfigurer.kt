@@ -24,7 +24,6 @@ object JsonConfigurer {
                         js.getString("mongoSignInDbName"),
                         js.getString("keycloakAdmin"),
                         js.getString("keycloakAdminPassword"))
-
                 future.complete(config)
             } else {
                 System.err.println("Reading configuration file is failed: " + result.cause())

@@ -64,6 +64,8 @@ abstract class BaseDao<T : BaseModel> (val dbManager: DbManager?,
         })
     }
 
+
+
     override fun update(t: T, id: String, companyId: String?): Observable<T> {
         return Observable.create({ event ->
             if (dataStore != null) {
@@ -225,6 +227,7 @@ abstract class BaseDao<T : BaseModel> (val dbManager: DbManager?,
 
     override fun saveAll(t: List<T>, id: String, companyId: String?): Observable<List<T>> {
         return Observable.create({ event ->
+
             val saveQuery = dataStore?.createWrite(clazz)
             for (item in t) {
                 item.userId = id

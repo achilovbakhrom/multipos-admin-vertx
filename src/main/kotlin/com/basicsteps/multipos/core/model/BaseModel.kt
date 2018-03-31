@@ -8,42 +8,19 @@ import java.util.*
 
 abstract class BaseModel : Trashable, Activeable, Auditable, Jsonable, Instanceable, Serializable {
 
-    @Id var id: String? = null
-    @Transient
-    @SerializedName("created_date")
-    override var createdTime = -1L
-    @Transient
-    @SerializedName("modified_date")
-    override var modifiedTime = -1L
-    @Transient
-    @SerializedName("created_by")
-    override var createdBy: String? = null
-    @Transient
-    @SerializedName("modified_by")
-    override var modifiedBy: String? = null
-    @Transient
-    @SerializedName("is_active")
-    override var active: Boolean = false
-    @Transient
-    @SerializedName("is_deleted")
-    override var deleted: Boolean = false
-    @Transient
-    @SerializedName("user_id")
-    var userId: String? = null
-    @Transient
-    @SerializedName("root_id")
-    override var rootId: String? = null
-    @Transient
-    @SerializedName("modified_id")
-    var modifiedId: String? = null
-    @Transient
-    @SerializedName("companyId_id")
-    override var companyId: String? = null
-    @Transient
-    @SerializedName("pos_id")
-    override var posId: String? = null
-    var access: String? = "*"
-
+    @Id @SerializedName("id") var id: String? = null
+    @Transient override var createdTime = -1L
+    @Transient override var modifiedTime = -1L
+    @Transient override var createdBy: String? = null
+    @Transient override var modifiedBy: String? = null
+    @SerializedName("active") override var active: Boolean = false
+    @Transient override var deleted: Boolean = false
+    @Transient var userId: String? = null
+    @Transient override var rootId: String? = null
+    @Transient var modifiedId: String? = null
+    @Transient override var companyId: String? = null
+    @Transient override var posId: String? = null
+    @Transient var access: String? = null
 
     @BeforeSave
     fun beforeSave() {
@@ -57,9 +34,10 @@ abstract class BaseModel : Trashable, Activeable, Auditable, Jsonable, Instancea
     }
 }
 
-enum class ModelType(type: String) {
+enum class ModelScope(val type: String) {
     PRIVATE("private"),
     PUBLIC("public"),
     PER_ESTABLISHMENT("per-establishment"),
-    PER_COMPANY("per-company")
+    PER_COMPANY("per-company");
+    fun value() : String = type
 }

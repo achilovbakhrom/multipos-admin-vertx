@@ -1,6 +1,7 @@
 package com.basicsteps.multipos.utils
 
 import com.basicsteps.multipos.config.*
+import com.basicsteps.multipos.model.Country
 import com.basicsteps.multipos.model.entities.Currency
 import com.basicsteps.multipos.model.entities.UnitCategoryEntity
 import com.basicsteps.multipos.model.entities.UnitEntity
@@ -19,6 +20,29 @@ import org.yaml.snakeyaml.constructor.Constructor
  */
 object ConfigUtils {
 
+    fun getCountryList(vertx: Vertx) : Observable<List<Country>> {
+        return Observable.create({ event ->
+            vertx.fileSystem().readFile(SystemConfig.COUNTRIES_PATH, { handler ->
+                if (handler.succeeded()) {
+                    val result = mutableListOf<Country>()
+                    val yamlString = handler.result().toString()
+                    val constructor = Constructor(CountryConfig::class.java)
+                    val yaml = Yaml(constructor)
+                    val data = yaml.loadAs(yamlString, CountryConfig::class.java)
+                    data.countries?.keys?.forEach { key ->
+                        val lang = (data.countries?.get(key) as? Map<*, *>)?.get("lang") as String
+                        val name = (data.countries?.get(key) as? Map<*, *>)?.get("name") as String
+                        val country = Country(lang, name)
+                        result.add(country)
+                    }
+                    event.onNext(result)
+                } else {
+                    event.onError(Exception(handler.cause()))
+                }
+            })
+        })
+    }
+
     /**
      * Generating all units from file: resources/units.yaml
      */
@@ -26,7 +50,7 @@ object ConfigUtils {
         return Observable.create({ event ->
             vertx.fileSystem().readFile(SystemConfig.UNITS_PATH, { handler ->
                 if (handler.succeeded()) {
-                    val result = ArrayList<UnitCategoryEntity>()
+                    val result = mutableListOf<UnitCategoryEntity>()
                     val yamlString = handler.result().toString()
                     val constructor = Constructor(UnitConfig::class.java)
                     val yaml = Yaml(constructor)
@@ -52,7 +76,7 @@ object ConfigUtils {
         return Observable.create({event ->
             vertx.fileSystem().readFile(SystemConfig.UNITS_PATH, { handler ->
                 if (handler.succeeded()) {
-                    val result = ArrayList<UnitEntity>()
+                    val result = mutableListOf<UnitEntity>()
                     val yamlString = handler.result().toString()
                     val constructor = Constructor(UnitConfig::class.java)
                     val yaml = Yaml(constructor)
@@ -86,7 +110,7 @@ object ConfigUtils {
         return Observable.create({event ->
             vertx.fileSystem().readFile(SystemConfig.CURRENCIES_PATH, { handler ->
                 if (handler.succeeded()) {
-                    val result = ArrayList<Currency>()
+                    val result = mutableListOf<Currency>()
                     val yamlString = handler.result().toString()
                     val constructor = Constructor(CurrencyConfig::class.java)
                     val yaml = Yaml(constructor)

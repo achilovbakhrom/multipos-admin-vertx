@@ -2,8 +2,11 @@ package com.basicsteps.multipos.verticles.handling.handler.config
 
 import com.basicsteps.multipos.core.BaseHandler
 import com.basicsteps.multipos.core.DbManager
+import com.basicsteps.multipos.core.dao.DataStoreException
+import com.basicsteps.multipos.core.model.exceptions.WriteDbFailedException
 import com.basicsteps.multipos.core.response.MultiPosResponse
 import com.basicsteps.multipos.core.response.MultiposRequest
+import com.basicsteps.multipos.model.StatusMessages
 import com.basicsteps.multipos.model.entities.Establishment
 import com.basicsteps.multipos.model.entities.POS
 import com.basicsteps.multipos.model.entities.Stock
@@ -20,11 +23,16 @@ class POSHandler(vertx: Vertx, dbManager: DbManager) : BaseHandler(vertx, dbMana
                 .posDao
                 ?.save(request.data!!, request.userId!!, request.companyId!!)
                 ?.subscribe({result ->
-                    message.reply(MultiPosResponse<Any>(null, null, "OK", HttpResponseStatus.OK.code()))
+                    message.reply(MultiPosResponse(result, null, StatusMessages.SUCCESS.value(), HttpResponseStatus.OK.code()).toJson())
                 }, {error ->
-
+                    when(error) {
+                        is WriteDbFailedException -> message.reply(MultiPosResponse(null, error.message, StatusMessages.ERROR.value(), HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).toJson())
+                        is DataStoreException -> message.reply(MultiPosResponse(null, error.message, StatusMessages.ERROR.value(), HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).toJson())
+                    }
                 })
     }
+
+    fun linkPOSStock(message: Message<String>) {}
 
     fun trashPOS(message: Message<String>) {
         val request = JsonUtils.toPojo<MultiposRequest<POS>>(message.body().toString())
@@ -58,11 +66,7 @@ class POSHandler(vertx: Vertx, dbManager: DbManager) : BaseHandler(vertx, dbMana
                 ?.findAll()
                 ?.subscribe({result ->
                     val res = mutableListOf<POS>()
-                    for (pos in result) {
-                        if (pos.owner_company_id.equals(companyId)) {
-                            result.add(pos)
-                        }
-                    }
+
                     message.reply(MultiPosResponse<List<POS>>(res, null, "OK", HttpResponseStatus.OK.code()))
                 }, {error ->
 
@@ -131,9 +135,12 @@ class POSHandler(vertx: Vertx, dbManager: DbManager) : BaseHandler(vertx, dbMana
                 .stockDao
                 ?.save(request.data!!, request.userId!!, request.companyId!!)
                 ?.subscribe({ result ->
-                    message.reply(MultiPosResponse<Any>(null, null, "OK", HttpResponseStatus.OK.code()))
+                    message.reply(MultiPosResponse<Any>(result, null, "OK", HttpResponseStatus.OK.code()))
                 }, {error ->
-
+                    when(error) {
+                        is WriteDbFailedException -> message.reply(MultiPosResponse(null, error.message, StatusMessages.ERROR.value(), HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).toJson())
+                        is DataStoreException -> message.reply(MultiPosResponse(null, error.message, StatusMessages.ERROR.value(), HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).toJson())
+                    }
                 })
 
     }
@@ -170,11 +177,7 @@ class POSHandler(vertx: Vertx, dbManager: DbManager) : BaseHandler(vertx, dbMana
                 ?.findAll()
                 ?.subscribe({result ->
                     val res = mutableListOf<Stock>()
-                    for (stock in result) {
-                        if (stock.accessPosId?.contains(posId)) {
-                            res.add(stock)
-                        }
-                    }
+
                     message.reply(MultiPosResponse<List<Stock>>(res, null, "OK", HttpResponseStatus.OK.code()))
                 }, { error ->
 
@@ -189,11 +192,7 @@ class POSHandler(vertx: Vertx, dbManager: DbManager) : BaseHandler(vertx, dbMana
                 ?.findAll()
                 ?.subscribe({result ->
                     val res = mutableListOf<Stock>()
-                    for (stock in result) {
-                        if (stock.accessEstablishmentId?.contains(establishmentId)) {
-                            res.add(stock)
-                        }
-                    }
+
                     message.reply(MultiPosResponse<List<Stock>>(res, null, "OK", HttpResponseStatus.OK.code()))
                 }, { error ->
 

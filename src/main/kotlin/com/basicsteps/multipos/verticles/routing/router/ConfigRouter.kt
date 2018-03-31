@@ -1,8 +1,11 @@
 package com.basicsteps.multipos.verticles.routing.router
 
+import com.basicsteps.multipos.config.CommonConstants
+import com.basicsteps.multipos.core.response.MultiposRequest
 import com.basicsteps.multipos.event_bus_channels.ConfigHandlerChannel
 import com.basicsteps.multipos.utils.RoutingUtils
 import io.vertx.core.Vertx
+import io.vertx.ext.auth.oauth2.impl.OAuth2TokenImpl
 import io.vertx.ext.web.RoutingContext
 
 /**
@@ -22,19 +25,35 @@ import io.vertx.ext.web.RoutingContext
 
 class ConfigRouter(val vertx: Vertx) {
 
-    // ---------- Unit Category routes ---------
+    // Units
+    fun getUnits(routingContext: RoutingContext) { RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.GET_UNITS.value()) }
     fun getUnitCategories(routingContext: RoutingContext) { RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.GET_UNIT_CATEGORY.value()) }
     fun getUnitCategoriesWithUnits(routingContext: RoutingContext) { RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.GET_UNIT_CATEGORY_WITH_UNITS.value()) }
     fun activateUnits(routingContext: RoutingContext) { RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.GET_UNIT_CATEGORY_WITH_UNITS.value()) }
-    fun activateUnit(routingContext: RoutingContext) { RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.GET_UNIT_CATEGORY_WITH_UNITS.value()) }
+    fun activateUnit(routingContext: RoutingContext) {
+        val request = RoutingUtils.requestFromPathParams<String>(routingContext, "unit_id")
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.ACTIVATE_UNIT.value(), request.toJson())
+    }
+    fun deactivateUnit(routingContext: RoutingContext) {
+        val request = RoutingUtils.requestFromPathParams<String>(routingContext, "unit_id")
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.DEACTIVATE_UNIT.value(), request.toJson())
+    }
+
+    // ---------- Unit Category routes ---------
+    fun addPOS(routingContext: RoutingContext) { RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.ADD_POS.value()) }
+    fun addStock(routingContext: RoutingContext) { RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.ADD_STOCK.value()) }
+    fun linkPOSStock(routingContext: RoutingContext) { RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.LINK_POS_STOCK.value()) }
+
+
     // ------------- End unit routes -------------
 
     // ------------- Currency routes --------------
     fun getCurrencies(routingContext: RoutingContext) {
 
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.GET_CURRENCY_LIST.value())
     }
 
-    fun cactrivateCurrencies(routingContext: RoutingContext) {
+    fun activateCurrencyList(routingContext: RoutingContext) {
 
     }
 
@@ -44,36 +63,37 @@ class ConfigRouter(val vertx: Vertx) {
     // -------------- End currency routes -----------
 
     // -------------- Account routes ----------------
-    fun createAccount(routingContext: RoutingContext) {
 
+
+    fun getAccountList(routingContext: RoutingContext) {
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.GET_ACCOUNT_LIST.value())
+    }
+    fun createAccount(routingContext: RoutingContext) {
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.ADD_ACCOUNT.value())
     }
 
     fun updateAccount(routingContext: RoutingContext) {
-
-    }
-
-    fun getAccounts(routingContext: RoutingContext) {
-
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.UPDATE_ACCOUNT.value())
     }
 
     fun getAccountById(routingContext: RoutingContext) {
-
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.GET_ACCOUNT_BY_ID.value())
     }
 
-    fun removeAccounts(routingAcontext: RoutingContext) {
-
+    fun removeAccounts(routingContext: RoutingContext) {
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.REMOVE_ACCOUNT.value())
     }
 
     fun removeAccount(routingContext: RoutingContext) {
-
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.REMOVE_ACCOUNT_LIST.value())
     }
 
     fun trashAccount(routingContext: RoutingContext) {
-
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.TRASH_ACCOUNT.value())
     }
 
     fun trashAccounts(routingContext: RoutingContext) {
-
+        RoutingUtils.route(vertx, routingContext, ConfigHandlerChannel.TRASH_ACCOUNT_LIST.value())
     }
     // -------------- End account routes -------------
 

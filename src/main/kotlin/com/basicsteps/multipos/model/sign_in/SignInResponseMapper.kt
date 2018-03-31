@@ -12,5 +12,5 @@ data class SignInResponseMapper(@SerializedName("access_token") var accessToken:
                                 @SerializedName("session_state") var sessionState: String,
                                 @SerializedName("expires_at") var expiresAt: Long,
                                 @SerializedName("username") var username: String,
-                                @SerializedName("mail") var mail: String,
-                                @SerializedName("tenant_id") var tenantId: String) : Serializable
+                                @SerializedName("image_url") var imageUrl: String,
+                                @SerializedName("mail") var mail: String) : Serializable

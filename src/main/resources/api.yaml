@@ -1,60 +1,63 @@
 openapi: '3.0.0'
 
 info:
-  version: 1.0.0
-  title: Swagger Petstore
+  version: v0.0.1 Alpha
+  title:  MULTIPOS API
+  contact:
+    name: API Support
+    url: http://www.multpos.io/api/support
+    email: wwwbasicstepsdevelopment@gmail.com
   license:
-    name: MIT
+    name: BasicSteps MIT
+
+servers:
+  - url: http://localhost:8081
+    description: main server address
+  - url: http://localhost:8080
+    description: keycloak server
 
 paths:
   /api/v1/sign-up:
     post:
-      summary: sign up end point
+      summary: User can sign up, after he can receive access code on his phone
       operationId: sign-up
       tags:
-        - sign up
-        - registration
-      parameters:
-        - name: signUpObject
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
+        - sign-up
+      requestBody:
+        description: Sign Up object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpObject'
 
       responses:
         '200':
-          description: An paged array of pets
+          description: Sign up response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
-        '400':
-          description:
-
+                $ref: "#/components/schemas/MultiposResponse"
+        '409':
+          description: Username already exists
+        '500':
+          description: Something went wrong on server side. Please contact with company.
         default:
           description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pet"
-
-
 
   /api/v1/sign-in:
     post:
-      summary: sign up end point
+      summary: Sign In and receive tokens
       operationId: sign-in
       tags:
-        - sign up
-        - registration
-      parameters:
-        - name: signUpObject
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
+        - sign-in
+      requestBody:
+        description: Sign In object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignInObject"
 
       responses:
         '200':
@@ -64,59 +67,53 @@ paths:
               schema:
                 $ref: "#/components/schemas/Pet"
         '400':
-          description:
-
+          description: Wrong username or password
+        '500':
+          description: Something went wrong on server side. Please contact with company.
         default:
           description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pet"
-  /api/v1/confirm-access-code:
+
+  /api/v1/confirm:
     post:
-      summary: confirmAccessCode
-      operationId: confirm-access-code
+      summary: Confirm access code, after confirmation client becomes to user
+      operationId: confirm
       tags:
-        - sign up
-        - registration
-      parameters:
-        - name: signUpObject
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
-
+        - sign-up
+      requestBody:
+        description: Confirmation  Object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmationObject"
       responses:
         '200':
-          description: An paged array of pets
+          description: Multpos response with null data member
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
+                $ref: "#/components/schemas/MultiposResponse"
         '400':
-          description:
-
+          description: Bad request. Incorrect json file
+        '404':
+          description: Email not found
+        '500':
+          description: Something went wrong on server side. Please contact with company.
         default:
           description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pet"
-  /api/v1/check-email:
-    post:
-      summary: checkEmail
+
+  /api/v1/mail/check/{email}:
+    get:
+      summary: Check email for uniqueness
       operationId: check-email
       tags:
-        - sign up
-        - registration
+        - sign-up
       parameters:
-        - name: signUpObject
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
+        - in: path
+          name: email
           schema:
-            type: integer
+            type: string
+          required: true
 
       responses:
         '200':
@@ -124,47 +121,83 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
-        '400':
-          description:
-
+                properties:
+                  data:
+                    type: object
+                    description: Check mail response object
+                    properties:
+                      email_unique:
+                        type: boolean
+                  status:
+                    type: string
+                  code:
+                    type: integer
+        '500':
+          description: Something went wrong on server side. Please contact with company.
         default:
           description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pet"
-  /api/v1/get-access-code:
+
+  /api/v1/upload-avatar:
     post:
-      summary: checkEmail
-      operationId: get-access-code
+      summary: Uploading avatar of sign up mapper object
+      operationId: upload-avatar
       tags:
-        - sign up
-        - registration
-      parameters:
-        - name: signUpObject
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
+        - sign-up
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary
 
       responses:
         '200':
-          description: An paged array of pets
+          description: Successfull uploaded
           content:
-            application/json:
+            json/application:
               schema:
-                $ref: "#/components/schemas/Pet"
-        '400':
-          description:
+                type: object
+                properties:
+                  data:
+                    type: string
+                    format: uri
+                  message:
+                    type: string
+                    nullable: true
+                  status:
+                    type: string
+                    enum: [SUCCESS, ERROR]
+                  code:
+                    type: integer
+
+        '500':
+          description: Something went wrong. Please contact with company!
 
         default:
           description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pet"
+
+  /api/v1/access-code:
+    get:
+      summary: checkEmail
+      operationId: access-code
+      parameters:
+        - in: query
+          name: email
+          schema:
+            type: string
+          required: true
+      tags:
+        - sign-up
+
+      responses:
+        '200':
+          description: Access code for requested mail
+        '400':
+          description: bad request
+
+        default:
+          description: unexpected error
+
   /api/v1/verification:
     get:
       summary: checkEmail
@@ -172,36 +205,138 @@ paths:
       security:
         - OAuth2: [read, write, profile]
       tags:
-        - sign up
-        - registration
-      parameters:
-        - name: signUpObject
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
+        - sign-up
 
       responses:
         '200':
           description: An paged array of pets
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pet"
         '400':
-          description:
-
+          description: bad request
         default:
           description: unexpected error
+  /api/v1/unit-list:
+    get:
+      summary: Returns array of units for the tenant
+      operationId: units
+      security:
+        - OAuth2: [read, write, profile]
+        - TenantSecurity: []
+      tags:
+        - config
+
+      responses:
+        '200':
+          description: An array of units
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
-  /api/v1/get-units:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UnitObject"
+        '500':
+          description: Something went wrong on server side. Please contact with company.
+        default:
+          description: unexpected error
+
+  /api/v1/unit/deactivate/{unit_id}:
+    get:
+      summary: Deactivates unit by given id from the path
+      operationId: deactivate-unit
+      parameters:
+        - in: path
+          name: unit_id
+          schema:
+            type: string
+          required: true
+          description: ID of deactivating unit
+      security:
+        - OAuth2: [read, write, profile]
+        - TenantSecurity: []
+      tags:
+        - config
+
+      responses:
+        '200':
+          description: An array of units
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MultiposResponse"
+        '500':
+          description: Something went wrong on server side. Please contact with company.
+        default:
+          description: unexpected error
+
+  /api/v1/unit/activate/{unit_id}:
+    get:
+      summary: Activates unit by given id from the path
+      operationId: activate-unit
+      parameters:
+        - in: path
+          name: unit_id
+          schema:
+            type: string
+          required: true
+          description: ID of activating unit
+      security:
+        - OAuth2: [read, write, profile]
+        - TenantSecurity: []
+      tags:
+        - config
+
+      responses:
+        '200':
+          description: An array of units
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MultiposResponse"
+        '500':
+          description: Something went wrong on server side. Please contact with company.
+        default:
+          description: unexpected error
+
+
+  /api/v1/unit-category-list:
+      get:
+        summary: checkEmail
+        operationId: unit-category-list
+        security:
+          - OAuth2: [read, write, profile]
+          - TenantSecurity: []
+        tags:
+          - sign up
+          - registration
+        parameters:
+          - name: signUpObject
+            in: query
+            description: How many items to return at one time (max 100)
+            required: false
+            schema:
+              type: integer
+
+        responses:
+          '200':
+            description: An paged array of pets
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Pet"
+          '400':
+            description: bad request
+
+          default:
+            description: unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Pet"
+
+
+  /api/v1/currency-list:
     get:
       summary: checkEmail
-      operationId: get-units
+      operationId: currency-list
       security:
         - OAuth2: [read, write, profile]
         - TenantSecurity: []
@@ -224,7 +359,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Pet"
         '400':
-          description:
+          description: bad request
 
         default:
           description: unexpected error
@@ -232,13 +367,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Pet"
-  /api/v1/get-unit-categories-full:
-    get:
-      summary: checkEmail
-      operationId: get-unit-categories-full
+
+  /api/v1/company/create:
+    post:
+      summary: addCompany
+      operationId: add-company
       security:
         - OAuth2: [read, write, profile]
-        - TenantSecurity: []
       tags:
         - sign up
         - registration
@@ -258,7 +393,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Pet"
         '400':
-          description:
+          description: bad request
 
         default:
           description: unexpected error
@@ -266,6 +401,214 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Pet"
+  /api/v1/pos/create:
+    post:
+      summary: addCompany
+      operationId: add-pos
+      security:
+        - OAuth2: [read, write, profile]
+        - TenantSecurity: [read, write, profile]
+      tags:
+        - sign up
+        - registration
+      parameters:
+        - name: signUpObject
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: An paged array of pets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        '400':
+          description: bad request
+
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+
+  /api/v1/stock/create:
+    post:
+      summary: addStock
+      operationId: add-stock
+      security:
+        - OAuth2: [read, write, profile]
+        - TenantSecurity: [read, write, profile]
+      tags:
+        - sign up
+        - registration
+      parameters:
+        - name: signUpObject
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: An paged array of pets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        '400':
+          description: bad request
+
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+
+  /api/v1/link-pos-stock:
+    post:
+      summary: addStock
+      operationId: link-pos-stock
+      security:
+        - OAuth2: [read, write, profile]
+        - TenantSecurity: [read, write, profile]
+      tags:
+        - sign up
+        - registration
+      parameters:
+        - name: signUpObject
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: An paged array of pets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        '400':
+          description: bad request
+
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+
+  /api/v1/company-list:
+    get:
+      summary: addStock
+      operationId: company-list
+      security:
+        - OAuth2: [read, write, profile]
+      tags:
+        - sign up
+        - registration
+      parameters:
+        - name: signUpObject
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: An paged array of pets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        '400':
+          description: bad request
+
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+
+  /api/v1/account/create:
+    post:
+      summary: addStock
+      operationId: add-account
+      security:
+        - OAuth2: [read, write, profile]
+        - TenantSecurity: [read, write, profile]
+      tags:
+        - sign up
+        - registration
+      parameters:
+        - name: signUpObject
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+
+      responses:
+        '200':
+          description: An paged array of pets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+        '400':
+          description: bad request
+
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+
+  /api/v1/account-list:
+      post:
+        summary: addStock
+        operationId: get-account-list
+        security:
+          - OAuth2: [read, write, profile]
+          - TenantSecurity: [read, write, profile]
+        tags:
+          - sign up
+          - registration
+        parameters:
+          - name: signUpObject
+            in: query
+            description: How many items to return at one time (max 100)
+            required: false
+            schema:
+              type: integer
+
+        responses:
+          '200':
+            description: An paged array of pets
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Pet"
+          '400':
+            description: bad request
+
+          default:
+            description: unexpected error
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/Pet"
 
 
 components:
@@ -287,6 +630,121 @@ components:
             profile: Grant read-only access to the account and user info only
 
   schemas:
+    ConfirmationObject:
+      type: object
+      properties:
+        mail:
+          type: string
+        access_code:
+          type: integer
+      required:
+        - mail
+        - access_code
+
+    SignInObject:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+        grant_type:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+      required:
+        - username
+        - password
+    MultiposResponseSignIn:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            access_token:
+              type: string
+            expires_in:
+              type: integer
+            refresh_expires_in:
+              type: integer
+            refresh_token:
+              type: string
+            token_type:
+              type: string
+            not_before_policy:
+              type: string
+            session_state:
+              type: string
+            expires_at:
+              type: integer
+              format: int64
+            username:
+              type: string
+            image_url:
+              type: string
+              format: uri
+            mail:
+              type: string
+        message:
+          type: string
+        status:
+          type: string
+        code:
+          type: integer
+
+    MultiposResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          nullable: true
+        message:
+          type: string
+        status:
+          type: string
+        code:
+          type: integer
+
+    SignUpObject:
+      type: object
+      properties:
+        mail:
+          type: string
+        password:
+          type: string
+          format: password
+        first_name:
+          type: string
+        last_name:
+          type: string
+        birthday:
+          type: string
+        sex:
+          type: string
+          enum: [male, famale]
+        primary_phone:
+          type: string
+        country:
+          type: string
+          enum: [Uzbekistan, Kazakhstan, Tajikistan, Turkmenistan, Russain Federation, Ukraine]
+      required:
+        - mail
+        - password
+    UnitObject:
+      type: object
+      properties:
+        name:
+          type: string
+        abbr:
+          type: string
+        factor:
+          type: number
+          format: double
+        unit_category_entity_id:
+          type: string
     Pet:
       type: object
       properties:

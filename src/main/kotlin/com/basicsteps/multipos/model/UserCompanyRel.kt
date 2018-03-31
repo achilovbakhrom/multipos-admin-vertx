@@ -6,17 +6,11 @@ import com.google.gson.annotations.SerializedName
 import de.braintags.io.vertx.pojomapper.annotation.Entity
 
 @Entity
-data class Company(@SerializedName("name") var name: String,
-                   @SerializedName("logo_url") var logoUrl: String,
-                   @SerializedName("address") var address: String,
-                   @SerializedName("phone_number") var phoneNumber: String,
-                   @SerializedName("zip_code") var zipCode: Int,
-                   @SerializedName("tenant_id") var tenantId: String) : BaseModel() {
-
-    constructor() : this("",  "", "", "", 0, "")
+data class UserCompanyRel(@SerializedName("user_name") var userName: String,
+                          @SerializedName("tenant_id") var tenantId: String) : BaseModel() {
 
     override fun instance(): Instanceable {
-        val result = Company()
+        val result = UserCompanyRel()
 
         //base
         result.createdTime = createdTime
@@ -32,13 +26,11 @@ data class Company(@SerializedName("name") var name: String,
         result.posId = posId
         result.access = access
 
-        //spec
-        result.name = name
-        result.logoUrl = logoUrl
-        result.address = address
-        result.phoneNumber = phoneNumber
-        result.zipCode = zipCode
+        //specs
+        result.userName = userName
         result.tenantId = tenantId
         return result
     }
+
+    constructor() :  this("", "")
 }
